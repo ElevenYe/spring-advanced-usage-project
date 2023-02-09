@@ -1,4 +1,4 @@
-package postProcessors.beanFactoryPostProcessors.bean;
+package com.usage.postProcessors.beanFactoryPostProcessors.bean;
 
 import lombok.Data;
 import org.springframework.stereotype.Component;
