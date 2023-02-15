@@ -38,6 +38,12 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
+        </dependency>
     </dependencies>
 
     <build>
@@ -51,8 +57,9 @@
             <resource>
                 <directory>src/main/resources</directory>
                 <includes>
-                    <include>**/application-*.xml</include>
-                    <include>**/application-*.yml</include>
+                    <include>**/application*.xml</include>
+                    <include>**/application*.yml</include>
+                    <include>**/application*.properties</include>
                 </includes>
                 <filtering>false</filtering>
             </resource>

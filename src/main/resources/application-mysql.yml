@@ -1,3 +1,3 @@
-mysql:
-  ip: 192.68
-  password: admin
+mysql-yml:
+  ip: MD5[aa42ba25c9163b776ebb535819556ed4]
+  password: MD5[5e8edd851d2fdfbd7415232c67367cc3]

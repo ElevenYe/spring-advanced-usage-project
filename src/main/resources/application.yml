@@ -1,0 +1,7 @@
+mysql-service:
+  ip: 192.68
+  password: admin
+
+spring:
+  profiles:
+    include: mysql

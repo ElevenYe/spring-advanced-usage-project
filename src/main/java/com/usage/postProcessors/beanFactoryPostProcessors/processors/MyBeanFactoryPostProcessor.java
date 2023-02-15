@@ -1,36 +1,57 @@
 package com.usage.postProcessors.beanFactoryPostProcessors.processors;
 
 import com.usage.postProcessors.beanFactoryPostProcessors.bean.Engine;
-import com.usage.postProcessors.beanFactoryPostProcessors.bean.MysqlInfo;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.MutablePropertyValues;
 import org.springframework.beans.factory.BeanNameAware;
 import org.springframework.beans.factory.FactoryBean;
-import org.springframework.beans.factory.config.*;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
+import org.springframework.boot.env.OriginTrackedMapPropertySource;
 import org.springframework.cglib.proxy.InvocationHandler;
 import org.springframework.cglib.proxy.Proxy;
+import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.ScannedGenericBeanDefinition;
+import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.MutablePropertySources;
+import org.springframework.core.env.PropertySource;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
+import java.security.MessageDigest;
+import java.util.LinkedHashMap;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 /**
- * spring前置处理器
+ * spring容器前置处理器
  * 在所有的bean定义已经保存加载到beanFactory，bean实例对象还没有创建出来的时候执行。
  * BeanFactoryPostProcessor是实现spring容器功能扩展的重要接口，例如修改bean属性值，实现bean动态代理等。
  * 应用场景：
  * 1、很多框架都是通过此接口实现对spring容器的扩展，例如mybatis与spring集成时，只定义了mapper接口，无实现类，
  * 但spring却可以完成自动注入。
- * 2、对敏感信息的解密处理，比如数据库连接信息加密和解密：在实际的业务开发中，在配置文件中明文配置mysq，redis的
- * 密码实际上是不安全的，需要配置加密后的密码信息，但是把加密后的密码信息注入的数据源中，去连接mysql数据库肯定
- * 会连接异常，因为mysql并不知道你的加密方式和加密方法。这就会产生一个需求：需要在配置文件中配置的数据库信息是加
+ * 2、对敏感信息的解密处理，比如数据库连接信息加密和解密：在实际的业务开发中，在配置文件中明文配置mysql，redis的
+ * 密码实际上是不安全的，需要配置加密后的密码信息。这就会产生一个需求：需要在配置文件中配置的数据库信息是加
  * 密的，但是在把密码信息注入数据源前在程序里解密处理。BeanFactoryPostProcessor正好可以解决这个问题，在真正
  * 使用到数据源去连接数据库前，读取到加密信息，进行解密处理，再用解密后的信息替换掉Spring容器中加密信息
  */
 @Component
-public class MyBeanFactoryPostProcessor implements BeanFactoryPostProcessor {
+public class MyBeanFactoryPostProcessor implements EnvironmentAware, BeanFactoryPostProcessor {
+
+    private static final String PREFIX = "MD5[";
+    private static final String SUFFIX = "]";
+
+    private ConfigurableEnvironment environment;
+
+    @Override
+    public void setEnvironment(Environment environment) {
+        this.environment = (ConfigurableEnvironment) environment;
+    }
 
     @Override
     public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
@@ -165,8 +186,50 @@ public class MyBeanFactoryPostProcessor implements BeanFactoryPostProcessor {
      * @param beanFactory
      */
     private void decodeUsage(ConfigurableListableBeanFactory beanFactory) {
-        // 修改bean属性值  ######## 这里 beanFactory.getBean("mysqlInfo") 会让 @ConfigurationProperties 和 @Value 失效，原因不明，需要查看源码 ######
-//        MysqlInfo mysqlInfo = (MysqlInfo) beanFactory.getBean("mysqlInfo");
-//        System.out.println("Mysql.ip: " + mysqlInfo.getIp());
+        // 修改bean属性值，beanFactory.getBean("mysqlInfo") 会导致 @ConfigurationProperties 属性注入失败。原因如下：
+        // 1.主程启动后先进入 SpringApplication 通过 prepareEnvironment 读取配置文件(发生在Bean生命周期之前)
+        // 2.前置处理器在 SpringApplication.refresh.registerBeanPostProcessors 中执行
+        // 3.此处 beanFactory.getBean("mysqlInfo") 如果没有获取到 Bean 将会调用 doCreateBean 创建一个 bean
+        // 4.SpringApplication.refresh.finishBeanFactoryInitialization(beanFactory)，此处将实例化单例 Bean 后，对 Bean 进行注入属性，
+        //   如果单例 Bean 已存在，则不会再注入属性
+        // MysqlInfo mysqlInfo = (MysqlInfo) beanFactory.getBean("mysqlInfo");
+        // System.out.println("Mysql.ip: " + mysqlInfo.getIp());
+
+        //
+        MutablePropertySources propSources = environment.getPropertySources();
+        StreamSupport.stream(propSources.spliterator(), false)
+                .filter(ps -> ps instanceof OriginTrackedMapPropertySource)
+                .collect(Collectors.toList())
+                .forEach(ps -> convertPropertySource((PropertySource<LinkedHashMap<String, Object>>) ps));
+        System.out.println("敏感信息加密完成.....");
+    }
+
+    /**
+     * 加密相关属性
+     * @param ps
+     */
+    private void convertPropertySource(PropertySource ps) {
+        LinkedHashMap source = (LinkedHashMap) ps.getSource();
+        source.forEach((k,v) -> {
+            String value = String.valueOf(v);
+            if (value.startsWith(PREFIX) && value.endsWith(SUFFIX)) {
+                value = value.replace(PREFIX, "").replace(SUFFIX, "");
+                value = md5(value);
+                source.put(k, value);
+            }
+        });
+    }
+
+    public static String md5(String source) {
+        StringBuffer sb = new StringBuffer(32);
+        try {
+            MessageDigest md 	= MessageDigest.getInstance("MD5");
+            byte[] array 		= md.digest(source.getBytes("utf-8"));
+            for (int i = 0; i < array.length; i++) {
+                sb.append(Integer.toHexString((array[i] & 0xFF) | 0x100).toUpperCase().substring(1, 3));
+            }
+        } catch (Exception e) {
+        }
+        return sb.toString();
     }
 }
