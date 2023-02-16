@@ -16,15 +16,16 @@ import org.springframework.cglib.proxy.InvocationHandler;
 import org.springframework.cglib.proxy.Proxy;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.ScannedGenericBeanDefinition;
-import org.springframework.core.env.ConfigurableEnvironment;
-import org.springframework.core.env.Environment;
-import org.springframework.core.env.MutablePropertySources;
-import org.springframework.core.env.PropertySource;
+import org.springframework.core.env.*;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
 import java.security.MessageDigest;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -200,7 +201,7 @@ public class MyBeanFactoryPostProcessor implements EnvironmentAware, BeanFactory
         StreamSupport.stream(propSources.spliterator(), false)
                 .filter(ps -> ps instanceof OriginTrackedMapPropertySource)
                 .collect(Collectors.toList())
-                .forEach(ps -> convertPropertySource((PropertySource<LinkedHashMap<String, Object>>) ps));
+                .forEach(ps -> convertPropertySource((MapPropertySource) ps));
         System.out.println("敏感信息加密完成.....");
     }
 
@@ -208,16 +209,19 @@ public class MyBeanFactoryPostProcessor implements EnvironmentAware, BeanFactory
      * 加密相关属性
      * @param ps
      */
-    private void convertPropertySource(PropertySource ps) {
-        LinkedHashMap source = (LinkedHashMap) ps.getSource();
+    private void convertPropertySource(MapPropertySource ps) {
+        Map<String, Object> sourceMap = new HashMap<>();
+        Map<String, Object> source = ps.getSource();
         source.forEach((k,v) -> {
             String value = String.valueOf(v);
             if (value.startsWith(PREFIX) && value.endsWith(SUFFIX)) {
                 value = value.replace(PREFIX, "").replace(SUFFIX, "");
                 value = md5(value);
-                source.put(k, value);
+                System.out.println(k + "==> " + value);
             }
+            sourceMap.put(k, value);
         });
+        environment.getPropertySources().replace(ps.getName(), new MapPropertySource(ps.getName(), sourceMap));
     }
 
     public static String md5(String source) {
