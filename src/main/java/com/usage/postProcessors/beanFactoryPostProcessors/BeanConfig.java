@@ -1,7 +1,7 @@
 package com.usage.postProcessors.beanFactoryPostProcessors;
 
 import com.usage.postProcessors.beanFactoryPostProcessors.bean.BenzCar;
-import com.usage.postProcessors.beanFactoryPostProcessors.bean.Engine;
+import com.usage.postProcessors.beanFactoryPostProcessors.interfaces.Engine;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

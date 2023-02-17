@@ -15,6 +15,6 @@ public class MyBeanDefinitionRegistryPostProcessorTest {
     @Test
     public void companyTest() {
         System.out.println("CompanyName: " + company.getCompanyName());
-        Assertions.assertEquals("阿里巴巴", company.getCompanyName());
+        Assertions.assertEquals("阿里巴巴", company.getCompanyName(), "OK");
     }
 }

@@ -1,6 +1,6 @@
 package com.usage.postProcessors.beanFactoryPostProcessors.processors;
 
-import com.usage.postProcessors.beanFactoryPostProcessors.bean.Engine;
+import com.usage.postProcessors.beanFactoryPostProcessors.interfaces.Engine;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.MutablePropertyValues;
 import org.springframework.beans.factory.BeanNameAware;
@@ -22,10 +22,7 @@ import org.springframework.stereotype.Component;
 import java.lang.reflect.Method;
 import java.security.MessageDigest;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 

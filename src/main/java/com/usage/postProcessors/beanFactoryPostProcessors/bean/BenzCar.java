@@ -1,7 +1,7 @@
 package com.usage.postProcessors.beanFactoryPostProcessors.bean;
 
+import com.usage.postProcessors.beanFactoryPostProcessors.interfaces.Engine;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.context.annotation.Bean;
 
 import javax.annotation.PostConstruct;
 
