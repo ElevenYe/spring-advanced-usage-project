@@ -1,0 +1,14 @@
+ApplicationContextAware: 实现了这个接口的类都可以获取到一个 ApplicationContext 对象. 可以获取容器中的所有Bean。
+ApplicationEventPublisherAware: 在bean中可以得到应用上下文的事件发布器, 从而可以在Bean中发布应用上下文的事件。
+BeanClassLoaderAware: 获取bean的类加载器
+BeanFactoryAware: 获取bean的工厂
+BeanNameAware: 获取bean在容器中的名字
+BootstrapContextAware: 获取BootstrapContext
+LoadTimeWeaverAware: 加载Spring Bean时织入第三方模块, 如AspectJ
+MessageSourceAware: 主要用于获取国际化相关接口
+NotificationPublisherAware: 用于获取通知发布者
+ResourceLoaderAware: 初始化时注入ResourceLoader
+ServletConfigAware: web开发过程中获取ServletConfig
+ServletContextAware: web开发过程中获取ServletContext信息
+EnvironmentAware: 获取当前的应用的环境，从而用来获取配置信息、当前profile等信息
+EmbeddedValueResolverAware: 获取StringValueResolver，用来解析 ${app.test} 的字符串值。

@@ -20,8 +20,9 @@ public class MyBeanPostProcessor implements BeanPostProcessor {
 
     @Autowired
     private ApplicationContext applicationContext;
+
     /**
-     * 在初始化之前调用
+     * 该方法在 bean 实例化完毕（且已经注入完毕），在 afterPropertiesSet 或自定义 init 方法执行之前
      * @param bean the new bean instance
      * @param beanName the name of the bean
      * @return
@@ -33,7 +34,7 @@ public class MyBeanPostProcessor implements BeanPostProcessor {
     }
 
     /**
-     * 在初始化之后调用
+     * 在 afterPropertiesSet 或自定义 init 方法执行之后
      *
      * 此处使用 BeanPostProcessor 实现了 @Resource(name = "xxx") 相同功能，使用自定义注解 @RoutingInjected(value = "xxx") 可
      * 以通过指定名称的方式从 IOC 容器中取出对应的 Bean .

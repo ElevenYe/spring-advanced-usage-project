@@ -214,7 +214,7 @@ public class MyBeanFactoryPostProcessor implements EnvironmentAware, BeanFactory
             if (value.startsWith(PREFIX) && value.endsWith(SUFFIX)) {
                 value = value.replace(PREFIX, "").replace(SUFFIX, "");
                 value = md5(value);
-                System.out.println(k + "==> " + value);
+                System.out.println(k + " ==> " + value);
             }
             sourceMap.put(k, value);
         });
